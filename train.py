@@ -1,7 +1,8 @@
-
 from glob import glob
 from dataset import DicomPairDataset, DicomToTensor
 from model import TextureConversion
+import argparse
+import os
 
 import torch
 import torch.nn as nn
@@ -10,24 +11,25 @@ from torch.utils.data import DataLoader, ConcatDataset
 from torchvision import transforms
 
 
-if __name__ == "__main__":
-
-    batch_size = 8
-    epoch = 300
-    save_path = "./models/BtoA"
+def train(opt):
+    batch_size = opt.batch
+    epoch = opt.epoch
+    save_path = opt.save_path
+    if not os.path.isdir(save_path):
+        os.makedirs(save_path)
 
     transform_list = [
         DicomToTensor()
     ]
 
-    device = torch.device("cuda:0")
-    #device = torch.device("cpu")
+    device = torch.device("cpu" if opt.device == -1 else opt.device)
+    # device = torch.device("cpu")
 
-    model = TextureConversion()#.type(torch.DoubleTensor)
+    model = TextureConversion()  # .type(torch.DoubleTensor)
     model = model.to(device)
 
-    dataset_FBP = DicomPairDataset(glob("E:/LiverCT/20210901-20211130_sort/testB/*/*.dcm"),
-                                   glob("E:/LiverCT/20210901-20211130_sort/testA/*/*.dcm"),
+    dataset_FBP = DicomPairDataset(glob(opt.dataA_path + "/**/*.dcm", recursive=True),
+                                   glob(opt.dataB_path + "/**/*.dcm", recursive=True),
                                    transforms.Compose(transform_list))
     train_loader = DataLoader(dataset_FBP, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
@@ -63,3 +65,22 @@ if __name__ == "__main__":
         torch.save(model.state_dict(), save_path + "/last_TC.pth")
 
     print('Finished Training')
+
+
+def train_arguments():
+    opt = argparse.ArgumentParser()
+
+    opt.add_argument("--dataA_path", type=str, help="dataset-A directory path. It extracts sub-directories.")
+    opt.add_argument("--dataB_path", type=str, help="dataset-B directory path. It extracts sub-directories.")
+    opt.add_argument("--save_path", type=str, help="trained model save path")
+
+    opt.add_argument("--device", type=int, help="gpu ids: e.g. 0 or 1. use -1 for CPU")
+    opt.add_argument("--batch", type=int, help="batch size")
+    opt.add_argument("--epoch", type=int, help="epoch size")
+
+    return opt
+
+
+if __name__ == "__main__":
+    parser = train_arguments()
+    train(parser.parse_args())
