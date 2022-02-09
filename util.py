@@ -34,6 +34,9 @@ def open_dicom(path, normalize = False):
 
 def tensor2dicom(input_image, original_path, save_path):
     image_numpy = input_image.squeeze(0).cpu().detach().numpy()
+    # apply normalization boundary
+    image_numpy[image_numpy < 0.0] = 0.0
+    image_numpy[image_numpy > 1.0] = 1.0
 
     original_dicom = pydicom.dcmread(original_path)
     original_numpy = original_dicom.pixel_array

@@ -47,17 +47,19 @@ def test(load_model_path: str, dataset_A: str, dataset_B: str, save_path: str):
         file_name = os.path.basename(data_path)
         tensor2dicom(output + input_data, data_path, f"{save_path}/{dir_name}/{file_name}")
 
+        #break
+
     print('Test Finished')
 
 
 if __name__ == "__main__":
 
-    load_modelAtoB_path = "./models/AtoB/last_TC.pth"
-    load_modelBtoA_path = "./models/BtoA/last_TC.pth"
+    load_modelAtoB_path = "./models/AtoB_210/last_TC.pth"
+    load_modelBtoA_path = "./models/BtoA_210/last_TC.pth"
     dataset_A_list = glob("E:/LiverCT/20210901-20211130_sort/testA/*")
     dataset_B_list = glob("E:/LiverCT/20210901-20211130_sort/testB/*")
-    saveAtoB_path = "./results/AtoB"
-    saveBtoA_path = "./results/BtoA"
+    saveAtoB_path = "./results/AtoB_test"
+    saveBtoA_path = "./results/BtoA_test"
 
     for target_idx in range(len(dataset_A_list)):
         test(load_modelAtoB_path, dataset_A_list[target_idx], dataset_B_list[target_idx], saveAtoB_path)
