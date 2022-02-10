@@ -31,7 +31,7 @@ def train(opt):
     dataset_FBP = DicomPairDataset(glob(opt.dataA_path + "/**/*.dcm", recursive=True),
                                    glob(opt.dataB_path + "/**/*.dcm", recursive=True),
                                    transforms.Compose(transform_list))
-    train_loader = DataLoader(dataset_FBP, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(dataset_FBP, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
 
     criterion = nn.MSELoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
