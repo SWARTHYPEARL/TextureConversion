@@ -15,6 +15,7 @@ def train(opt):
     batch_size = opt.batch
     epoch = opt.epoch
     save_path = opt.save_path
+    input_channel = opt.input_channel
     if not os.path.isdir(save_path):
         os.makedirs(save_path)
 
@@ -25,13 +26,14 @@ def train(opt):
     device = torch.device("cpu" if opt.device == -1 else opt.device)
     # device = torch.device("cpu")
 
-    model = TextureConversion()  # .type(torch.DoubleTensor)
+    model = TextureConversion(input_channel)  # .type(torch.DoubleTensor)
     model = model.to(device)
 
-    dataset_FBP = DicomPairDataset(glob(opt.dataA_path + "/**/*.dcm", recursive=True),
-                                   glob(opt.dataB_path + "/**/*.dcm", recursive=True),
-                                   transforms.Compose(transform_list))
-    train_loader = DataLoader(dataset_FBP, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+    dataset_AtoB = DicomPairDataset(glob(opt.dataA_path + "/**/*.dcm", recursive=True),
+                                    glob(opt.dataB_path + "/**/*.dcm", recursive=True),
+                                    transforms.Compose(transform_list),
+                                    input_channel)
+    train_loader = DataLoader(dataset_AtoB, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
 
     criterion = nn.MSELoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -43,7 +45,12 @@ def train(opt):
         for i, target in enumerate(train_loader):
             # get the inputs
             data, label = target["data"].to(device), target["label"].to(device)
-            input_data = data.clone()
+            if input_channel == 1:
+                input_data = data.clone()
+            elif input_channel == 3:
+                input_data = torch.index_select(data, 1, torch.tensor([1]).to(device))
+            else:
+                raise Exception("input channel dose not equal either 1 or 3 in train process.")
 
             # compute output
             output = model(data)
@@ -71,8 +78,9 @@ def train_arguments():
     opt = argparse.ArgumentParser()
 
     opt.add_argument("--dataA_path", type=str, help="dataset-A directory path. It extracts sub-directories.")
-    opt.add_argument("--dataB_path", type=str, help="dataset-B directory path. It extracts sub-directories.")
+    opt.add_argument("--dataB_path", type=str, default=1, help="dataset-B directory path. It extracts sub-directories.")
     opt.add_argument("--save_path", type=str, help="trained model save path")
+    opt.add_argument("--input_channel", type=int, help="data input channel. default = 1")
 
     opt.add_argument("--device", type=int, help="gpu ids: e.g. 0 or 1. use -1 for CPU")
     opt.add_argument("--batch", type=int, help="batch size")
