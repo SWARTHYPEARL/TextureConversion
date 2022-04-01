@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 
-def test(load_model_path: str, dataset_A: str, dataset_B: str, save_path: str):
+def test(load_model_path: str, dataset_A: str, dataset_B: str, save_path: str, input_channel: int):
 
     print(f"load_model: {load_model_path}")
     print(f"dataset_A: {dataset_A}")
@@ -25,13 +25,14 @@ def test(load_model_path: str, dataset_A: str, dataset_B: str, save_path: str):
     device = torch.device("cuda:0")
     # device = torch.device("cpu")
 
-    model = TextureConversion()  # .type(torch.DoubleTensor)
+    model = TextureConversion(input_channel)  # .type(torch.DoubleTensor)
     model.load_state_dict(torch.load(load_model_path, map_location=device))
     model = model.to(device)
 
     dataset_AtoB = DicomTestDataset(glob(dataset_A + "/*.dcm"),
-                                   glob(dataset_B + "/*.dcm"),
-                                   transforms.Compose(transform_list))
+                                    glob(dataset_B + "/*.dcm"),
+                                    transforms.Compose(transform_list),
+                                    input_channel)
     test_loader = DataLoader(dataset_AtoB, batch_size=1, shuffle=False, num_workers=1, pin_memory=True)
 
     model.eval()
@@ -39,7 +40,12 @@ def test(load_model_path: str, dataset_A: str, dataset_B: str, save_path: str):
         # get the inputs
         data, label = target["data"].to(device), target["label"]  # .to(device)
         data_path, label_path = target["data_path"][0], target["label_path"][0]
-        input_data = data.clone()
+        if input_channel == 1:
+            input_data = data.clone()
+        elif input_channel == 3:
+            input_data = torch.index_select(data, 1, torch.tensor([1]).to(device))
+        else:
+            raise Exception("input channel dose not equal either 1 or 3 in train process.")
 
         # compute output
         output = model(data)
@@ -64,8 +70,10 @@ def LiverCT_test():
     # saveBtoA_path = "./results/BtoA_test"
 
     load_model_path = "./models/20200724-20200729_train"
-    load_model_list = ["300_TC.pth", "200_TC.pth", "100_TC.pth"]
-    save_path = "./results/20200724-20200729_train_PVPonly"
+    #load_model_list = ["300_TC.pth", "200_TC.pth", "100_TC.pth"]
+    load_model_list = ["050_TC.pth"]
+    save_path = "./results/20200724-20200729_train_PVP_L-A"
+    input_channel = 1
 
     load_modelAtoB_path = []
     load_modelBtoA_path = []
@@ -88,15 +96,15 @@ def LiverCT_test():
                     if target_phase in phase_list:
                         dataset_A_list.append(target_series)
                         saveAtoB_path.append(save_path + f"/{target_model}/{os.path.basename(target_patient)}")
-                        load_modelAtoB_path.append(load_model_path + f"/{target_phase}/AtoB/{target_model}")
-                        # load_modelAtoB_path.append(load_model_path + f"/PVP/AtoB/{target_model}")
+                        #load_modelAtoB_path.append(load_model_path + f"/{target_phase}/AtoB/{target_model}")
+                        load_modelAtoB_path.append(load_model_path + f"/PVP_L-A/AtoB/{target_model}")
                 else:
                     target_phase = target_recon.split("_")[0]
                     if target_phase in phase_list:
                         dataset_B_list.append(target_series)
                         saveBtoA_path.append(save_path + f"/{target_model}/{os.path.basename(target_patient)}")
-                        load_modelBtoA_path.append(load_model_path + f"/{target_phase}/BtoA/{target_model}")
-                        # load_modelBtoA_path.append(load_model_path + f"/PVP/BtoA/{target_model}")
+                        #load_modelBtoA_path.append(load_model_path + f"/{target_phase}/BtoA/{target_model}")
+                        load_modelBtoA_path.append(load_model_path + f"/PVP_L-A/BtoA/{target_model}")
 
     # for target_idx in range(len(dataset_A_list)):
     #    if not (dataset_A_list[target_idx][:109] == dataset_B_list[target_idx][:109]):
@@ -105,37 +113,38 @@ def LiverCT_test():
 
     for target_idx in range(len(dataset_A_list)):
         test(load_modelAtoB_path[target_idx], dataset_A_list[target_idx], dataset_B_list[target_idx],
-             saveAtoB_path[target_idx])
+             saveAtoB_path[target_idx], input_channel)
         test(load_modelBtoA_path[target_idx], dataset_B_list[target_idx], dataset_A_list[target_idx],
-             saveBtoA_path[target_idx])
+             saveBtoA_path[target_idx], input_channel)
 
         # break
 
 def ACRphantom_test():
 
-    target_dir = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\dataset\ACRphantom_01-10"
+    target_dir = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\dataset\ACRphantom_01-21_sort"
     dataset_A_list = glob(target_dir + "/*/FBP")
     dataset_B_list = glob(target_dir + "/*/ADMIRE")
+    input_channel = 1
 
-    f_model_name = "300_TC.pth"
+    f_model_name = "100_TC.pth"
     #load_modelAtoB_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\ACRphantom_11-21_sort\AtoB" + f"/{f_model_name}"
     #load_modelBtoA_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\ACRphantom_11-21_sort\BtoA" + f"/{f_model_name}"
-    load_modelAtoB_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\20200724-20200729_train\PVP\AtoB" + f"/{f_model_name}"
-    load_modelBtoA_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\20200724-20200729_train\PVP\BtoA" + f"/{f_model_name}"
+    load_modelAtoB_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\20200724-20200729_train\PVP_L-A\AtoB" + f"/{f_model_name}"
+    load_modelBtoA_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\20200724-20200729_train\PVP_L-A\BtoA" + f"/{f_model_name}"
 
     #save_path = f"./results/ACRphantom_01-10_sort/{f_model_name}"
-    save_path = f"./results/ACRphantom_01-10_sort/PVP_{f_model_name}"
+    save_path = f"./results/ACRphantom_01-21_sort/PVP_L-A_{f_model_name}"
 
     for target_idx in range(len(dataset_A_list)):
         test(load_modelAtoB_path, dataset_A_list[target_idx], dataset_B_list[target_idx],
-             save_path + f"/{os.path.basename(os.path.dirname(dataset_A_list[target_idx]))}")
+             save_path + f"/{os.path.basename(os.path.dirname(dataset_A_list[target_idx]))}", input_channel)
         test(load_modelBtoA_path, dataset_B_list[target_idx], dataset_A_list[target_idx],
-             save_path + f"/{os.path.basename(os.path.dirname(dataset_B_list[target_idx]))}")
+             save_path + f"/{os.path.basename(os.path.dirname(dataset_B_list[target_idx]))}", input_channel)
 
 
     #test()
 
 if __name__ == "__main__":
 
-    #LiverCT_test()
-    ACRphantom_test()
+    LiverCT_test()
+    #ACRphantom_test()

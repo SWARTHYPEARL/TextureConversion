@@ -45,8 +45,8 @@ def tensor2dicom(input_image, original_path, save_path):
     #original_dicom.PixelData = np.round((image_numpy + 1) / 2.0 * (np.max(original_numpy * original_dicom.RescaleSlope))).astype(np.uint16).tobytes()
     #original_dicom.PixelData = np.round((image_numpy + 1) / 2.0 * 4095).astype(np.uint16).tobytes()
     original_dicom.PixelData = np.round(image_numpy * 4095).astype(np.uint16).tobytes()
-    #original_dicom.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
-    original_dicom.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+    original_dicom.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
+    #original_dicom.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
 
     if not os.path.isdir(os.path.dirname(save_path)):
         os.makedirs(os.path.dirname(save_path))

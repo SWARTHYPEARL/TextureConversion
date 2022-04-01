@@ -51,14 +51,25 @@ class DicomPairDataset(data.Dataset):
 
 
 class DicomTestDataset(data.Dataset):
-    def __init__(self, data_list, label_list, transform = None):
+    def __init__(self, data_list, label_list, transform = None, input_channel = 1):
         super(DicomTestDataset, self).__init__()
         self.data_list = data_list
         self.label_list = label_list
         self.transform = transform
+        self.input_channel = input_channel
 
     def __getitem__(self, index):
-        data = open_dicom(self.data_list[index], True)
+        if self.input_channel == 1:
+            data = open_dicom(self.data_list[index], True)
+        elif self.input_channel == 3:
+            data_front = open_dicom(self.data_list[index - 1 if index > 0 else 0], True)
+            data_center = open_dicom(self.data_list[index], True)
+            data_rear = open_dicom(self.data_list[index + 1 if index < self.__len__() - 1 else self.__len__() - 1],
+                                   True)
+            data = np.concatenate((data_front, data_center, data_rear), axis=2)
+        else:
+            raise Exception("input channel dose not equal either 1 or 3 in dataset process.")
+
         label = open_dicom(self.label_list[index], True)
         if self.transform is not None:
             data = self.transform(data)
