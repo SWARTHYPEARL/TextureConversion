@@ -71,8 +71,8 @@ def LiverCT_test():
 
     load_model_path = "./models/20200724-20200729_train"
     #load_model_list = ["300_TC.pth", "200_TC.pth", "100_TC.pth"]
-    load_model_list = ["050_TC.pth"]
-    save_path = "./results/20200724-20200729_train_PVP_L-A"
+    load_model_list = load_model_list = [os.path.basename(x) for x in glob(load_model_path + f"/PVP/AtoB/*")] # ["050_TC.pth"]
+    save_path = r"Y:\SP_work\billion\ubuntu\Python_Project\TextureConversion\results\20200724-20200729_train_PVP_validation"
     input_channel = 1
 
     load_modelAtoB_path = []
@@ -82,7 +82,7 @@ def LiverCT_test():
     saveAtoB_path = []
     saveBtoA_path = []
     phase_list = ["DELAY", "L-A", "PVP"]
-    target_dir = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\dataset\total_20200727-20220131"
+    target_dir = "./dataset/total_20200727-20220131_validation"
     for target_model in load_model_list:
         for target_patient in glob(target_dir + "/*"):
             for target_series in glob(target_patient + "/*"):
@@ -97,14 +97,14 @@ def LiverCT_test():
                         dataset_A_list.append(target_series)
                         saveAtoB_path.append(save_path + f"/{target_model}/{os.path.basename(target_patient)}")
                         #load_modelAtoB_path.append(load_model_path + f"/{target_phase}/AtoB/{target_model}")
-                        load_modelAtoB_path.append(load_model_path + f"/PVP_L-A/AtoB/{target_model}")
+                        load_modelAtoB_path.append(load_model_path + f"/PVP/AtoB/{target_model}")
                 else:
                     target_phase = target_recon.split("_")[0]
                     if target_phase in phase_list:
                         dataset_B_list.append(target_series)
                         saveBtoA_path.append(save_path + f"/{target_model}/{os.path.basename(target_patient)}")
                         #load_modelBtoA_path.append(load_model_path + f"/{target_phase}/BtoA/{target_model}")
-                        load_modelBtoA_path.append(load_model_path + f"/PVP_L-A/BtoA/{target_model}")
+                        load_modelBtoA_path.append(load_model_path + f"/PVP/BtoA/{target_model}")
 
     # for target_idx in range(len(dataset_A_list)):
     #    if not (dataset_A_list[target_idx][:109] == dataset_B_list[target_idx][:109]):
