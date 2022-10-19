@@ -6,6 +6,8 @@ models/*
 results/*
 train_parameter.txt
 
+.idea/
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
