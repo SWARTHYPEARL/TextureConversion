@@ -119,32 +119,7 @@ def LiverCT_test():
 
         # break
 
-def ACRphantom_test():
-
-    target_dir = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\dataset\ACRphantom_01-21_sort"
-    dataset_A_list = glob(target_dir + "/*/FBP")
-    dataset_B_list = glob(target_dir + "/*/ADMIRE")
-    input_channel = 1
-
-    f_model_name = "100_TC.pth"
-    #load_modelAtoB_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\ACRphantom_11-21_sort\AtoB" + f"/{f_model_name}"
-    #load_modelBtoA_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\ACRphantom_11-21_sort\BtoA" + f"/{f_model_name}"
-    load_modelAtoB_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\20200724-20200729_train\PVP_L-A\AtoB" + f"/{f_model_name}"
-    load_modelBtoA_path = r"C:\Users\SNUBH\SP_work\Python_Project\TextureConversion\models\20200724-20200729_train\PVP_L-A\BtoA" + f"/{f_model_name}"
-
-    #save_path = f"./results/ACRphantom_01-10_sort/{f_model_name}"
-    save_path = f"./results/ACRphantom_01-21_sort/PVP_L-A_{f_model_name}"
-
-    for target_idx in range(len(dataset_A_list)):
-        test(load_modelAtoB_path, dataset_A_list[target_idx], dataset_B_list[target_idx],
-             save_path + f"/{os.path.basename(os.path.dirname(dataset_A_list[target_idx]))}", input_channel)
-        test(load_modelBtoA_path, dataset_B_list[target_idx], dataset_A_list[target_idx],
-             save_path + f"/{os.path.basename(os.path.dirname(dataset_B_list[target_idx]))}", input_channel)
-
-
-    #test()
 
 if __name__ == "__main__":
 
     LiverCT_test()
-    #ACRphantom_test()
